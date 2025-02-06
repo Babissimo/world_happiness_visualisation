@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>World Happiness Visualised</title>
+    <link rel="icon"  href="data/favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/topojson@3.0.2/dist/topojson.min.js"></script>
+  </head>
+  <body>
+    <h1>World Happiness Visualised 2005-2022</h1>
+    <div class="svg-container">
+      <svg id="map"></svg>
+      <svg id="line"></svg>
+      <div id="legend-container">
+        <svg id="legend"></svg>
+      </div>
+    </div>
+    <div id="menus"></div>
+    <div id="descriptions"></div>
+    <div id="credits"><p>Data from the <a href="https://worldhappiness.report/">World Happiness Report</a></p></div>
+    <div id="tooltip"></div>
+    <script src="index.js" type="module">
+    </script>
+  </body>
+</html>
