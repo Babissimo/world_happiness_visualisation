@@ -29,6 +29,13 @@ g#Year {
   vertical-align: middle;
 }
 
+button.play-toggle {
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
 
 /* Contains SVGs */
 .svg-container {

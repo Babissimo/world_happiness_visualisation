@@ -114,4 +114,5 @@ export const lineChart = (parent, props) => {
         .style('opacity', d => d.isSelected ? 1 : 0.5),
       exit => exit.remove()
     );
+
 };

@@ -3,7 +3,9 @@ export const slider = (parent, props) => {
     valueRange,
     selectedValue,
     onValueSelected,
-    id
+    id,
+    isPlaying = false,
+    onPlayToggle = null
   } = props;
 
   // Make or reuse group element for slider and its associated text
@@ -35,6 +37,21 @@ export const slider = (parent, props) => {
         sliderText.text(`${id}: ${event.target.value} `);
         onValueSelected(event);
       });
+
+  // Optional play/pause button rendered alongside the slider (e.g. for the Year control)
+  if (onPlayToggle) {
+    sliderGroup.selectAll('button.play-toggle')
+      .data([null])
+      .join('button')
+        .attr('type', 'button')
+        .attr('class', 'play-toggle')
+        .attr('aria-label', isPlaying ? `Pause ${id} animation` : `Play ${id} animation`)
+        .text(isPlaying ? '⏸' : '▶')
+        .on('click', onPlayToggle);
+  } else {
+    // If no handler provided, remove any existing play button
+    sliderGroup.selectAll('button.play-toggle').remove();
+  }
 
   return slider;
 };

@@ -79,5 +79,4 @@ Data from the [World Happiness Report](https://worldhappiness.report/).
 
 - **Responsiveness** — Make the layout adapt gracefully to smaller screens and mobile devices.
 - **Current-year marker on line chart** — Add a visual marker for the selected year on each series.
-- **Play button by current year** — Add a play/pause control to animate the year slider over time.
 - **Animated transitions** — Smoothly animate map, chart, and legend updates when year or metric changes.

@@ -35,6 +35,8 @@ Promise.all([
 
   let selectedYear = defaultYear;
   let selectedMetric = metrics[0];
+  let isPlaying = false;
+  let playIntervalId = null;
 
   const projection = d3.geoNaturalEarth1();
   const pathGenerator = d3.geoPath().projection(projection);
@@ -96,6 +98,39 @@ Promise.all([
       regionByCountry.set(d.CountryName, d.Region);
     }
   });
+
+  const stepYear = () => {
+    const currentIndex = years.indexOf(String(selectedYear));
+    const nextIndex = (currentIndex + 1) % years.length;
+    selectedYear = years[nextIndex];
+    updateVis();
+  };
+
+  const stopPlayback = () => {
+    if (playIntervalId != null) {
+      clearInterval(playIntervalId);
+      playIntervalId = null;
+    }
+    if (isPlaying) {
+      isPlaying = false;
+      updateVis();
+    }
+  };
+
+  const startPlayback = () => {
+    if (playIntervalId != null) return;
+    isPlaying = true;
+    playIntervalId = setInterval(stepYear, 500);
+    updateVis();
+  };
+
+  const togglePlayback = () => {
+    if (isPlaying) {
+      stopPlayback();
+    } else {
+      startPlayback();
+    }
+  };
 
   function dynamicSort(property) {
     const sortOrder = 1;
@@ -171,7 +206,8 @@ Promise.all([
       lineNames: sortedSelectedCountries,
       hoveredLine: hoveredCountry,
       yValueFunction: (countryName, year) => (metricByCountry.get(year).get(selectedMetric).get(countryName) || null),
-      colourScale: getColourForCountry
+      colourScale: getColourForCountry,
+      currentYear: +selectedYear
     });
     interactiveLegend(legendSvg, {
       names: sortedCountryNames,
@@ -247,7 +283,9 @@ Promise.all([
         selectedYear = event.target.value;
         updateVis();
       },
-      id: 'Year'
+      id: 'Year',
+      isPlaying,
+      onPlayToggle: togglePlayback
     });
 
     choroplethKey(choroplethKeyGroup, {
