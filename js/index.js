@@ -55,6 +55,11 @@ Promise.all([
   const counts = Array(palette.length).fill(0);
   const countryToColour = new Map();
 
+  // Cached sorted lists to avoid repeated sorting, especially on hover-only updates
+  let sortedSelectedCountries = [];
+  let sortedCountryNames = [];
+  let sortedUnselectedCountries = [];
+
   function argminCount(counts) {
     let best = 0;
     for (let k = 1; k < counts.length; k++) {
@@ -132,6 +137,13 @@ Promise.all([
     };
   }
 
+  function recomputeSortedLists() {
+    const comparator = dynamicSort(selectedMetric);
+    sortedSelectedCountries = Array.from(selectedCountries).sort(comparator);
+    sortedCountryNames = Array.from(countryNames).sort(comparator);
+    sortedUnselectedCountries = Array.from(unselectedCountries).sort(comparator);
+  }
+
   const colourScale = d3.scaleLinear()
     .domain(metricScaleMap[selectedMetric])
     .range(colourPalette);
@@ -156,15 +168,15 @@ Promise.all([
       leftLabel: selectedMetric,
       bottomRange: [+years[0], +years[years.length - 1]],
       bottomLabel: "Year",
-      lineNames: Array.from(selectedCountries).sort(dynamicSort(selectedMetric)),
+      lineNames: sortedSelectedCountries,
       hoveredLine: hoveredCountry,
       yValueFunction: (countryName, year) => (metricByCountry.get(year).get(selectedMetric).get(countryName) || null),
       colourScale: getColourForCountry
     });
     interactiveLegend(legendSvg, {
-      names: Array.from(countryNames).sort(dynamicSort(selectedMetric)),
-      visibleNames: Array.from(selectedCountries).sort(dynamicSort(selectedMetric)),
-      hiddenNames: Array.from(unselectedCountries).sort(dynamicSort(selectedMetric)),
+      names: sortedCountryNames,
+      visibleNames: sortedSelectedCountries,
+      hiddenNames: sortedUnselectedCountries,
       width: legendWidth,
       height: legendHeight,
       margin: { top: 0, right: 0, bottom: 50, left: 0 },
@@ -215,6 +227,9 @@ Promise.all([
         countryToColour.set(country, k);
       }
     }
+
+    // Recompute sorted lists whenever metric, year, or selection may have changed
+    recomputeSortedLists();
 
     dropdownMenu(d3.select('#menus'), {
       options: metrics,
@@ -299,16 +314,16 @@ Promise.all([
       leftLabel: selectedMetric,
       bottomRange: [+years[0], +years[years.length - 1]],
       bottomLabel: "Year",
-      lineNames: Array.from(selectedCountries).sort(dynamicSort(selectedMetric)),
+      lineNames: sortedSelectedCountries,
       hoveredLine: hoveredCountry,
       yValueFunction: (countryName, year) => (metricByCountry.get(year).get(selectedMetric).get(countryName) || null),
       colourScale: getColourForCountry
     });
 
     interactiveLegend(legendSvg, {
-      names: Array.from(countryNames).sort(dynamicSort(selectedMetric)),
-      visibleNames: Array.from(selectedCountries).sort(dynamicSort(selectedMetric)),
-      hiddenNames: Array.from(unselectedCountries).sort(dynamicSort(selectedMetric)),
+      names: sortedCountryNames,
+      visibleNames: sortedSelectedCountries,
+      hiddenNames: sortedUnselectedCountries,
       width: legendWidth,
       height: legendHeight,
       margin: { top: 0, right: 0, bottom: 50, left: 0 },
