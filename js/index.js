@@ -19,8 +19,8 @@ import { interactiveLegend } from './components/interactiveLegend.js';
 import { getCSSRuleValue } from './utils/getCSSRuleValue.js';
 
 Promise.all([
-  d3.json('../data/countries-110m.json'),
-  d3.csv('../data/World Happiness Report.csv')
+  d3.json('data/countries-110m.json'),
+  d3.csv('data/World Happiness Report.csv')
 ]).then(([topoData, happinessData]) => {
 
   const mapSvg = d3.select('#map');
