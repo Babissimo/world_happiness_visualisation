@@ -5,28 +5,37 @@ export const dropdownMenu = (parent, props) => {
     id
   } = props;
 
-  // create group element for dropdown menu and its associated text
-  const dropdownGroup = parent.selectAll('g#' + id).data([null]).enter().append('g')
-    .attr('id', id)
-    .attr('class', 'dropdown');
+  // Create or reuse group element for dropdown menu and its associated text
+  const dropdownGroup = parent.selectAll('g#' + id)
+    .data([null])
+    .join('g')
+      .attr('id', id)
+      .attr('class', 'dropdown');
 
   // place text
-  const idText = dropdownGroup.selectAll('text').data([null]);
-  const idTextEnter = idText.enter().append('text')
-    .attr('class', 'text')
-    .merge(idText)
+  const idText = dropdownGroup.selectAll('text')
+    .data([null])
+    .join('text')
+      .attr('class', 'text')
       .text(`${id}: `);
 
   // update dropdown menu
-  const select = dropdownGroup.selectAll('select').data([null]);
-  const selectEnter = select.enter().append('select')
-    .merge(select)
+  const select = dropdownGroup.selectAll('select')
+    .data([null])
+    .join('select')
       .on('change', onOptionSelected);
 
   // update options of menu
-  const option = selectEnter.selectAll('option').data(options);
-  option.enter().append('option')
-    .merge(option)
+  const option = select.selectAll('option')
+    .data(options, d => d);
+
+  option.join(
+    enter => enter.append('option')
       .attr('value', d => d)
-      .text(d => d);
+      .text(d => d),
+    update => update
+      .attr('value', d => d)
+      .text(d => d),
+    exit => exit.remove()
+  );
 };

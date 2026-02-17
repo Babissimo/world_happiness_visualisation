@@ -6,32 +6,34 @@ export const slider = (parent, props) => {
     id
   } = props;
 
-  // make group element for slider and its associated text
-  const sliderGroup = parent.selectAll('g#' + id).data([null]).enter().append('g')
-    .attr('id', id)
-    .attr('class', 'slider');
+  // Make or reuse group element for slider and its associated text
+  const sliderGroup = parent.selectAll('g#' + id)
+    .data([null])
+    .join('g')
+      .attr('id', id)
+      .attr('class', 'slider');
 
   // update selected value text
-  const sliderText = sliderGroup.selectAll('text.sliderText').data([null]);
-  const sliderTextEnter = sliderText.enter().append('text')
-    .attr('class', 'sliderText')
-    .merge(sliderText)
+  const sliderText = sliderGroup.selectAll('text.sliderText')
+    .data([null])
+    .join('text')
+      .attr('class', 'sliderText')
       .text(`${id}: ${selectedValue} `);
 
   // update slider
-  const slider = sliderGroup.selectAll('input.slider').data([null]);
-  const sliderEnter = slider.enter().append('input')
-    .attr('type', 'range')
-    .attr('min', valueRange[0])
-    .attr('max', valueRange[valueRange.length - 1])
-    .attr('step', 1)
-    .attr('class', 'slider')
-    .merge(slider)
-      .attr('value', selectedValue)
+  const slider = sliderGroup.selectAll('input.slider')
+    .data([null])
+    .join('input')
+      .attr('type', 'range')
+      .attr('min', valueRange[0])
+      .attr('max', valueRange[valueRange.length - 1])
+      .attr('step', 1)
+      .attr('class', 'slider')
+      .property('value', selectedValue)
       .on('input', (event) => {
-        sliderTextEnter.text(`${id}: ${event.target.value} `);
+        sliderText.text(`${id}: ${event.target.value} `);
         onValueSelected(event);
       });
 
-  return sliderEnter;
+  return slider;
 };

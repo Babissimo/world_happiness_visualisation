@@ -4,11 +4,13 @@ export const variableText = (parent, props) => {
     optionTextMap
   } = props;
 
-  // update text description to that relevant to the selected option
-  const message = parent.selectAll('text.description').data([null]);
-  const messageEnter = message.enter().append('text')
-    .attr('class', 'description');
-  messageEnter.merge(message)
-    .html(optionTextMap[selectedOption]);
+  // Update text description relevant to the selected option.
+  // Use an HTML element so we can render rich text (e.g. <b> tags) inside the #descriptions div.
+  const message = parent.selectAll('div.description')
+    .data([null])
+    .join('div')
+      .attr('class', 'description');
+
+  message.html(optionTextMap[selectedOption]);
 
 };
