@@ -63,8 +63,34 @@ Promise.all([
     return best;
   }
 
-  const metricByCountry = new Map(years.map(y => [y, new Map(metrics.map(o => [o, new Map(happinessData.filter(f => f.Year === y).map(d => ([d.CountryName, +d[o]] || null)))]))]));
-  const regionByCountry = new Map(happinessData.map(d => [d.CountryName, d.Region]));
+  // Build nested metric lookup: year -> metric -> country -> value
+  const metricByCountry = new Map();
+  years.forEach((year) => {
+    const metricMap = new Map();
+    metrics.forEach((metric) => {
+      metricMap.set(metric, new Map());
+    });
+    metricByCountry.set(year, metricMap);
+  });
+
+  const regionByCountry = new Map();
+
+  happinessData.forEach((d) => {
+    const year = d.Year;
+    if (!metricByCountry.has(year)) return;
+
+    metrics.forEach((metric) => {
+      const rawValue = d[metric];
+      if (rawValue === '' || rawValue == null) return;
+      const value = +rawValue;
+      if (Number.isNaN(value)) return;
+      metricByCountry.get(year).get(metric).set(d.CountryName, value);
+    });
+
+    if (!regionByCountry.has(d.CountryName) && d.Region != null && d.Region !== '') {
+      regionByCountry.set(d.CountryName, d.Region);
+    }
+  });
 
   function dynamicSort(property) {
     const sortOrder = 1;
@@ -86,16 +112,22 @@ Promise.all([
     }
     if (invertedMetricScale.includes(property)) {
       return function(a, b) {
-        const aValue = metricByCountry.get(selectedYear).get(property).get(a) || Infinity;
-        const bValue = metricByCountry.get(selectedYear).get(property).get(b) || Infinity;
-        if (aValue === bValue) dynamicSort("Alphabetical")(a, b);
+        const valueMap = metricByCountry.get(selectedYear).get(property);
+        const aValue = (valueMap.get(a) ?? Infinity);
+        const bValue = (valueMap.get(b) ?? Infinity);
+        if (aValue === bValue) {
+          return dynamicSort("Alphabetical")(a, b);
+        }
         return (aValue - bValue) * sortOrder;
       };
     }
     return function(a, b) {
-      const aValue = metricByCountry.get(selectedYear).get(property).get(a) || -Infinity;
-      const bValue = metricByCountry.get(selectedYear).get(property).get(b) || -Infinity;
-      if (aValue === bValue) dynamicSort("Alphabetical")(a, b);
+      const valueMap = metricByCountry.get(selectedYear).get(property);
+      const aValue = (valueMap.get(a) ?? -Infinity);
+      const bValue = (valueMap.get(b) ?? -Infinity);
+      if (aValue === bValue) {
+        return dynamicSort("Alphabetical")(a, b);
+      }
       return (bValue - aValue) * sortOrder;
     };
   }
