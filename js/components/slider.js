@@ -29,6 +29,7 @@ export const slider = (parent, props) => {
       .attr('max', valueRange[valueRange.length - 1])
       .attr('step', 1)
       .attr('class', 'slider')
+      .attr('aria-label', `${id} slider`)
       .property('value', selectedValue)
       .on('input', (event) => {
         sliderText.text(`${id}: ${event.target.value} `);

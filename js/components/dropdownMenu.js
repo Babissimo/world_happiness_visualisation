@@ -23,6 +23,7 @@ export const dropdownMenu = (parent, props) => {
   const select = dropdownGroup.selectAll('select')
     .data([null])
     .join('select')
+      .attr('aria-label', `${id} selector`)
       .on('change', onOptionSelected);
 
   // update options of menu
