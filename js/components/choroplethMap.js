@@ -12,7 +12,8 @@ export const choroplethMap = (parent, props) => {
     onCountryClick,
     onMouseOver,
     onMouseOut,
-    hoveredCountry
+    hoveredCountry,
+    previousHoveredCountry
   } = props;
 
   // Earth's sphere border
@@ -22,16 +23,15 @@ export const choroplethMap = (parent, props) => {
     .attr('d', pathGenerator({type: 'Sphere'}))
     .merge(earthBorder);
 
-  // d3-zoom 
+  // d3-zoom
   parent.call(d3.zoom()
-  .scaleExtent([1, 8])
-  .translateExtent([[0, 0], [width, height]])
-  .on('zoom', event => {
-    // only apply zoom if it's not a double-click event
-    if (!event.sourceEvent || event.sourceEvent.type !== 'dblclick') {
-      parent.attr('transform', event.transform);
-    }
-  }));
+    .scaleExtent([1, 8])
+    .translateExtent([[0, 0], [width, height]])
+    .on('zoom', event => {
+      if (!event.sourceEvent || event.sourceEvent.type !== 'dblclick') {
+        parent.attr('transform', event.transform);
+      }
+    }));
 
   // inset shadow
   let filter = parent.select('defs.filter');
@@ -41,34 +41,34 @@ export const choroplethMap = (parent, props) => {
       .attr('id', 'shadow')
       .attr('width', '150%')
       .attr('height', '150%');
-  
+
     filter.append('feOffset')
       .attr('result', 'offOut')
       .attr('in', 'SourceAlpha')
       .attr('dx', '0')
       .attr('dy', '0');
-  
+
     filter.append('feGaussianBlur')
       .attr('result', 'blurOut')
       .attr('in', 'offOut')
       .attr('stdDeviation', '5');
-  
+
     filter.append('feComposite')
       .attr('in', 'SourceGraphic')
       .attr('in2', 'blurOut')
       .attr('operator', 'out')
       .attr('result', 'inverse');
-  
+
     filter.append('feFlood')
       .attr('color', '#000000')
       .attr('result', 'color');
-  
+
     filter.append('feComposite')
       .attr('in', 'color')
       .attr('in2', 'inverse')
       .attr('operator', 'in')
       .attr('result', 'shadow');
-  
+
     filter.append('feComposite')
       .attr('in', 'shadow')
       .attr('in2', 'SourceGraphic')
@@ -78,33 +78,54 @@ export const choroplethMap = (parent, props) => {
 
   // render map with the path generator
   const countryPaths = parent.selectAll('path.country')
-  .data(countries.features)
-  .join(
-    enter => enter.append('path')
-      .attr('class', 'country')
-      .attr('fill', d => (colourScale(countryValueMap(d)) == null) ? nullColour : colourScale(countryValueMap(d)))
-      .attr('d', pathGenerator)
-      .on('click', onCountryClick)
-      .on('pointerover', onMouseOver)
-      .on('pointerleave', onMouseOut),
-    update => update
-      .attr('class', d => `country${
-            selectedCountries.has(d.properties.name)
+    .data(countries.features)
+    .join(
+      enter => enter.append('path')
+        .attr('class', d => `country${
+          selectedCountries.has(d.properties.name)
             ? ' selected'
-            : hoveredCountry == d.properties.name
+            : hoveredCountry === d.properties.name
             ? ' hovered'
-            :'' 
+            : ''
+        }`)
+        .attr('fill', d => (colourScale(countryValueMap(d)) == null) ? nullColour : colourScale(countryValueMap(d)))
+        .style('filter', d => selectedCountries.has(d.properties.name) ? 'url(#shadow)' : '')
+        .style('stroke-width', d => selectedCountries.has(d.properties.name)
+          ? '2px'
+          : hoveredCountry === d.properties.name
+          ? '1px'
+          : '0.1px'
+        )
+        .attr('d', pathGenerator)
+        .on('click', onCountryClick)
+        .on('pointerover', onMouseOver)
+        .on('pointerleave', onMouseOut),
+      update => {
+        update
+          .attr('fill', d => (colourScale(countryValueMap(d)) == null) ? nullColour : colourScale(countryValueMap(d)))
+          .style('filter', d => selectedCountries.has(d.properties.name) ? 'url(#shadow)' : '');
+        const hoverAffected = (hoveredCountry != null || previousHoveredCountry != null);
+        const toUpdateClassStroke = hoverAffected
+          ? update.filter(d => d.properties.name === hoveredCountry || d.properties.name === previousHoveredCountry)
+          : update;
+        toUpdateClassStroke
+          .attr('class', d => `country${
+            selectedCountries.has(d.properties.name)
+              ? ' selected'
+              : hoveredCountry === d.properties.name
+              ? ' hovered'
+              : ''
           }`)
-      .attr('fill', d => (colourScale(countryValueMap(d)) == null) ? nullColour : colourScale(countryValueMap(d)))
-      .style('filter', d => selectedCountries.has(d.properties.name) ? 'url(#shadow)' : ''),
-    exit => exit.remove()
-  )
-  .style('stroke-width', d => selectedCountries.has(d.properties.name)
-      ? '2px'
-      : hoveredCountry === d.properties.name
-      ? '1px'
-      : '0.1px'
-  );
+          .style('stroke-width', d => selectedCountries.has(d.properties.name)
+            ? '2px'
+            : hoveredCountry === d.properties.name
+            ? '1px'
+            : '0.1px'
+          );
+        return update;
+      },
+      exit => exit.remove()
+    );
 
   // tooltip
   const tooltipPadding = 5;
@@ -112,23 +133,22 @@ export const choroplethMap = (parent, props) => {
     .on('pointerover', (event, d) => {
       d3.select('#tooltip')
         .style('display', 'block')
-        .style('left', (event.pageX + tooltipPadding) + 'px')   
+        .style('left', (event.pageX + tooltipPadding) + 'px')
         .style('top', (event.pageY + tooltipPadding) + 'px')
         .style('border-bottom-color', (colourScale(countryValueMap(d)) == null) ? nullColour : colourScale(countryValueMap(d)))
         .html(`
           <div class="tooltip-title">${d.properties.name}${(countryValueMap(d) == null) ? '' : ': ' + countryValueMap(d).toPrecision(3)}</div>
           <div><i>${regionByCountry.get(d.properties.name)}</i></div>
         `);
-      onMouseOver(event,d);
+      onMouseOver(event, d);
     })
     .on('pointermove', (event, d) => {
       d3.select('#tooltip')
-      .style('left', (event.pageX + tooltipPadding) + 'px')   
-      .style('top', (event.pageY + tooltipPadding) + 'px');
+        .style('left', (event.pageX + tooltipPadding) + 'px')
+        .style('top', (event.pageY + tooltipPadding) + 'px');
     })
-    .on('pointerleave', (event,d) => {
+    .on('pointerleave', (event, d) => {
       d3.select('#tooltip').style('display', 'none');
-      onMouseOut(event,d);
+      onMouseOut(event, d);
     });
-    
-  };
+};
